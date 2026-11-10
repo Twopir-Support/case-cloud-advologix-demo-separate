@@ -1,0 +1,2 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata"><fullName>Paralegal__c</fullName><label>Paralegal</label><deleteConstraint>SetNull</deleteConstraint><referenceTo>User</referenceTo><relationshipLabel>Paralegal Matters</relationshipLabel><relationshipName>Paralegal_Matters</relationshipName><required>false</required><type>Lookup</type><trackHistory>false</trackHistory></CustomField>

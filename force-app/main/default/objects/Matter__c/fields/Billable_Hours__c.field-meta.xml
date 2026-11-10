@@ -1,0 +1,2 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata"><fullName>Billable_Hours__c</fullName><label>Billable Hours</label><summarizedField>Time__c.Time_in_Hours__c</summarizedField><summaryFilterItems><field>Time__c.Billable__c</field><operation>equals</operation><value>True</value></summaryFilterItems><summaryForeignKey>Time__c.Matter__c</summaryForeignKey><summaryOperation>sum</summaryOperation><type>Summary</type></CustomField>

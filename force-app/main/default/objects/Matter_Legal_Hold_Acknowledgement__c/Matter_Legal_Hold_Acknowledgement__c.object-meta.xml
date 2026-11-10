@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+  
+  <deploymentStatus>Deployed</deploymentStatus>
+  <description>A custodian's acknowledgement of a legal hold notice on a matter.</description>
+  <enableActivities>false</enableActivities>
+  <enableBulkApi>true</enableBulkApi>
+  <enableFeeds>false</enableFeeds>
+  <enableHistory>false</enableHistory>
+  <enableLicensing>false</enableLicensing>
+  <enableReports>true</enableReports>
+  <enableSearch>true</enableSearch>
+  <enableSharing>true</enableSharing>
+  <enableStreamingApi>true</enableStreamingApi>
+  <externalSharingModel>ControlledByParent</externalSharingModel>
+  <label>Matter Legal Hold Acknowledgement</label>
+  <nameField><displayFormat>LHA-{00000}</displayFormat><label>Acknowledgement Number</label><trackHistory>false</trackHistory><type>AutoNumber</type></nameField>
+  <pluralLabel>Matter Legal Hold Acknowledgements</pluralLabel>
+  <sharingModel>ControlledByParent</sharingModel>
+  <visibility>Public</visibility>
+</CustomObject>

@@ -1,0 +1,23 @@
+<template>
+    <lightning-card title="Date Calculator" icon-name="standard:date_input">
+        <div class="slds-p-horizontal_medium">
+            <lightning-input type="date" label="Start date" value={startDate} onchange={setStart}></lightning-input>
+            <div class="slds-grid slds-gutters_x-small">
+                <div class="slds-col"><lightning-input type="number" label="Days" value={days} onchange={setDays}></lightning-input></div>
+                <div class="slds-col"><lightning-combobox label="Direction" value={direction} options={directionOptions} onchange={setDirection}></lightning-combobox></div>
+            </div>
+            <lightning-input type="toggle" label="Business days only (skip weekends and holidays)" checked={business} onchange={setBusiness} class="slds-m-vertical_x-small"></lightning-input>
+            <lightning-button variant="brand" label="Calculate" onclick={calculate}></lightning-button>
+            <template lwc:if={result}>
+                <p class="slds-text-heading_small slds-m-top_small">Result: <lightning-formatted-date-time value={result} year="numeric" month="long" day="numeric" weekday="long"></lightning-formatted-date-time></p>
+            </template>
+            <hr class="slds-m-vertical_small"/>
+            <lightning-input type="date" label="Days until" value={endDate} onchange={setEnd}></lightning-input>
+            <lightning-button label="Count days" onclick={count} class="slds-m-top_x-small"></lightning-button>
+            <template lwc:if={between}>
+                <p class="slds-m-top_small">{between.calendarDays} calendar days · {between.businessDays} business days</p>
+            </template>
+            <template lwc:if={error}><p class="slds-text-color_error">{error}</p></template>
+        </div>
+    </lightning-card>
+</template>

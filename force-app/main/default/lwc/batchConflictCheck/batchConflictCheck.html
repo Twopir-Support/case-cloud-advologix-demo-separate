@@ -1,0 +1,14 @@
+<template>
+    <lightning-card title="Batch Conflict Check" icon-name="standard:shield">
+        <div class="slds-p-horizontal_medium">
+            <lightning-textarea label="Names to check (one per line, up to 20)" value={terms} onchange={setTerms}
+                placeholder="Acme Corporation&#10;Jane Smith"></lightning-textarea>
+            <lightning-input label="Description (optional)" value={description} onchange={setDescription}></lightning-input>
+            <lightning-button variant="brand" label="Run conflict checks" onclick={run} disabled={running} class="slds-m-top_small"></lightning-button>
+            <template lwc:if={error}><p class="slds-text-color_error slds-m-top_small">{error}</p></template>
+            <template lwc:if={results.length}>
+                <lightning-datatable class="slds-m-top_medium" key-field="key" data={results} columns={columns} hide-checkbox-column></lightning-datatable>
+            </template>
+        </div>
+    </lightning-card>
+</template>

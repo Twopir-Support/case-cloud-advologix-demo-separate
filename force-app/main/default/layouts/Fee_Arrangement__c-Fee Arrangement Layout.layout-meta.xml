@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Layout xmlns="http://soap.sforce.com/2006/04/metadata">
+  <layoutSections><customLabel>true</customLabel><detailHeading>true</detailHeading><editHeading>true</editHeading><label>Fee Arrangement</label><layoutColumns><layoutItems><behavior>Required</behavior><field>Name</field></layoutItems><layoutItems><behavior>Edit</behavior><field>Fee_Type__c</field></layoutItems><layoutItems><behavior>Edit</behavior><field>Description__c</field></layoutItems><layoutItems><behavior>Edit</behavior><field>Active__c</field></layoutItems></layoutColumns><layoutColumns><layoutItems><behavior>Edit</behavior><field>Fee_Arrangement_Price__c</field></layoutItems><layoutItems><behavior>Edit</behavior><field>Contingency_Percentage__c</field></layoutItems><layoutItems><behavior>Edit</behavior><field>Cap_Amount__c</field></layoutItems><layoutItems><behavior>Edit</behavior><field>Discount_Percentage__c</field></layoutItems></layoutColumns><style>TwoColumnsTopToBottom</style></layoutSections><layoutSections><customLabel>false</customLabel><detailHeading>true</detailHeading><editHeading>false</editHeading><label>System Information</label><layoutColumns><layoutItems><behavior>Readonly</behavior><field>CreatedById</field></layoutItems></layoutColumns><layoutColumns><layoutItems><behavior>Readonly</behavior><field>LastModifiedById</field></layoutItems></layoutColumns><style>TwoColumnsTopToBottom</style></layoutSections>
+  
+  <relatedLists><fields>NAME</fields><fields>Matter__c</fields><fields>Fee_Type__c</fields><fields>Start_Date__c</fields><relatedList>Matter_Fee_Arrangement__c.Source_Fee_Arrangement__c</relatedList></relatedLists>
+  <showEmailCheckbox>false</showEmailCheckbox>
+  <showHighlightsPanel>false</showHighlightsPanel>
+  <showInteractionLogPanel>false</showInteractionLogPanel>
+  <showRunAssignmentRulesCheckbox>false</showRunAssignmentRulesCheckbox>
+  <showSubmitAndAttachButton>false</showSubmitAndAttachButton>
+</Layout>

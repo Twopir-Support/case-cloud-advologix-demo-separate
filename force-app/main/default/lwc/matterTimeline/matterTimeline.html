@@ -1,0 +1,29 @@
+<template>
+    <lightning-card title="Matter Timeline" icon-name="standard:timeline">
+        <div slot="actions">
+            <lightning-combobox variant="label-hidden" value={filter} options={filterOptions} onchange={setFilter}></lightning-combobox>
+        </div>
+        <div class="slds-p-horizontal_medium">
+            <template lwc:if={error}><p class="slds-text-color_error">{error}</p></template>
+            <template lwc:if={empty}><p class="slds-text-color_weak">Nothing has happened on this matter yet.</p></template>
+            <ul class="slds-timeline">
+                <template for:each={visible} for:item="i">
+                    <li key={i.key} class="slds-m-bottom_small">
+                        <div class="slds-media">
+                            <div class="slds-media__figure"><lightning-icon icon-name={i.icon} size="small"></lightning-icon></div>
+                            <div class="slds-media__body">
+                                <div class="slds-grid">
+                                    <a href={i.url} class="slds-col slds-text-title_bold">{i.title}</a>
+                                    <span class="slds-col slds-grow-none slds-text-body_small slds-text-color_weak">
+                                        {i.category} · <lightning-formatted-date-time value={i.occurredAt} year="numeric" month="short" day="2-digit"></lightning-formatted-date-time>
+                                    </span>
+                                </div>
+                                <template lwc:if={i.detail}><p class="slds-text-body_small slds-line-clamp_small">{i.detail}</p></template>
+                            </div>
+                        </div>
+                    </li>
+                </template>
+            </ul>
+        </div>
+    </lightning-card>
+</template>

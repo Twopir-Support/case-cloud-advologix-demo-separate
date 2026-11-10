@@ -1,0 +1,2 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata"><fullName>Matter_Age__c</fullName><label>Matter Age (in days)</label><formula>IF(ISBLANK(Open_Date__c), 0, IF(ISBLANK(Close_Date__c), TODAY() - Open_Date__c, Close_Date__c - Open_Date__c))</formula><formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs><precision>18</precision><scale>0</scale><required>false</required><type>Number</type><unique>false</unique><externalId>false</externalId></CustomField>

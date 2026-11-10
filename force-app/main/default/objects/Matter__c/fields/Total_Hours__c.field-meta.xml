@@ -1,0 +1,2 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata"><fullName>Total_Hours__c</fullName><label>Total Hours</label><summarizedField>Time__c.Time_in_Hours__c</summarizedField><summaryForeignKey>Time__c.Matter__c</summaryForeignKey><summaryOperation>sum</summaryOperation><type>Summary</type></CustomField>

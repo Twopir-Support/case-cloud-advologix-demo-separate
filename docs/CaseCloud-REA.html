@@ -1,0 +1,522 @@
+<title>CaseCloud Reverse Engineering Analysis</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: fixed left rail of sections (stacks above content on phones), single reading column, wide tables scroll in their own boxes */
+:root{
+  --bg:#f6f7f7; --surface:#ffffff; --fg:#17201f; --muted:#56635f; --line:#d9dfdd;
+  --accent:#0d6560; --accent-soft:#e2f0ee; --code-bg:#eef2f1;
+  --ok:#1f7a3f; --ok-soft:#e3f3e8; --warn:#9a5b00; --warn-soft:#fbefd9; --unk:#7a3b8f; --unk-soft:#f2e6f6;
+  --f-display:"Archivo", "Helvetica Neue", Arial, sans-serif;
+  --f-body:"IBM Plex Sans", "Segoe UI", Roboto, Arial, sans-serif;
+  --f-mono:"IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f1514; --surface:#162020; --fg:#e4ecea; --muted:#9aaaa6; --line:#2a3836;
+  --accent:#5cc4b9; --accent-soft:#163a37; --code-bg:#1c2928;
+  --ok:#6fd194; --ok-soft:#173523; --warn:#f0b35c; --warn-soft:#3a2c14; --unk:#d29be6; --unk-soft:#33213b; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f1514; --surface:#162020; --fg:#e4ecea; --muted:#9aaaa6; --line:#2a3836;
+  --accent:#5cc4b9; --accent-soft:#163a37; --code-bg:#1c2928;
+  --ok:#6fd194; --ok-soft:#173523; --warn:#f0b35c; --warn-soft:#3a2c14; --unk:#d29be6; --unk-soft:#33213b; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.6}
+.wrap{display:grid;grid-template-columns:250px minmax(0,1fr);gap:40px;max-width:1280px;margin:0 auto;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:32px 64px}
+nav.rail{position:sticky;top:calc(env(safe-area-inset-top,0px) + 24px);align-self:start;max-height:calc(100vh - 48px);overflow:auto}
+.rail .brand{font-family:var(--f-display);font-weight:800;font-size:15px;letter-spacing:.02em;margin-bottom:4px}
+.rail .sub{font-size:12px;color:var(--muted);margin-bottom:18px}
+.rail ol{list-style:none;margin:0;padding:0;display:grid;gap:2px;counter-reset:s}
+.rail a{display:block;padding:6px 10px;border-radius:6px;color:var(--fg);text-decoration:none;font-size:14px}
+.rail a:hover,.rail a:focus-visible{background:var(--accent-soft);outline:none}
+.rail a span{font-family:var(--f-mono);font-size:11px;color:var(--muted);margin-right:8px}
+main{min-width:0}
+header.hero{border-bottom:1px solid var(--line);padding-bottom:24px;margin-bottom:8px}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+h1{font-family:var(--f-display);font-weight:800;font-size:clamp(28px,4vw,40px);line-height:1.1;margin:8px 0 12px;text-wrap:balance}
+h2{font-family:var(--f-display);font-weight:700;font-size:24px;margin:0 0 6px;text-wrap:balance}
+h3{font-family:var(--f-display);font-weight:600;font-size:17px;margin:24px 0 8px}
+p{max-width:72ch;margin:0 0 12px}
+.lede{font-size:17px;color:var(--muted);max-width:70ch}
+section{padding-block:40px;border-bottom:1px solid var(--line);scroll-margin-top:16px}
+section .num{font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+.meta{display:flex;flex-wrap:wrap;gap:8px 20px;font-size:13px;color:var(--muted);margin-top:12px}
+.meta b{color:var(--fg);font-weight:600}
+code,.api{font-family:var(--f-mono);font-size:12.5px;background:var(--code-bg);padding:1px 5px;border-radius:4px;word-break:break-word}
+pre.codeblk{font-family:var(--f-mono);font-size:12.5px;background:var(--code-bg);padding:14px 16px;border-radius:8px;overflow-x:auto;line-height:1.5;margin:8px 0 16px}
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:8px;background:var(--surface);margin:12px 0 20px}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th,td{text-align:left;vertical-align:top;padding:9px 12px;border-bottom:1px solid var(--line)}
+th{font-family:var(--f-display);font-weight:600;font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);background:var(--bg);white-space:nowrap}
+tr:last-child td{border-bottom:0}
+td.n{font-family:var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.b{display:inline-block;font-family:var(--f-mono);font-size:10.5px;font-weight:500;letter-spacing:.04em;padding:1px 7px;border-radius:999px;white-space:nowrap;vertical-align:1px}
+.b.v{color:var(--ok);background:var(--ok-soft)}
+.b.i{color:var(--warn);background:var(--warn-soft)}
+.b.u{color:var(--unk);background:var(--unk-soft)}
+.legend{display:flex;flex-wrap:wrap;gap:10px 22px;font-size:13px;margin:12px 0 4px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin:16px 0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:14px 16px;min-width:0}
+.card h4{font-family:var(--f-display);font-size:14px;margin:0 0 6px}
+.card p{font-size:13.5px;margin:0;color:var(--muted)}
+.note{border-left:3px solid var(--warn);background:var(--warn-soft);padding:12px 16px;border-radius:0 8px 8px 0;margin:16px 0;font-size:14px;max-width:80ch}
+.note.ok{border-color:var(--ok);background:var(--ok-soft)}
+.diagram{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:16px;overflow-x:auto;margin:12px 0 20px}
+.diagram svg{display:block;min-width:760px;width:100%;height:auto}
+pre.mermaid{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:16px;overflow-x:auto;margin:12px 0 20px}
+ol.steps{padding-left:22px;max-width:76ch}
+ol.steps li{margin-bottom:6px}
+.guide{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+.guide .card ol{padding-left:20px;margin:6px 0 0;font-size:13.5px}
+.guide .card ol li{margin-bottom:4px}
+.role{font-family:var(--f-mono);font-size:11px;color:var(--accent);text-transform:uppercase;letter-spacing:.06em}
+a{color:var(--accent)}
+ul.src{font-size:13px;columns:2 320px;padding-left:18px}
+ul.src li{margin-bottom:4px;break-inside:avoid}
+@media (max-width:900px){
+  .wrap{grid-template-columns:minmax(0,1fr);gap:8px}
+  nav.rail{position:static;max-height:none;border-bottom:1px solid var(--line);padding-bottom:12px}
+  .rail ol{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+html{scroll-behavior:smooth}
+</style>
+
+<div class="wrap">
+<nav class="rail" aria-label="Sections">
+  <div class="brand">CaseCloud REA</div>
+  <div class="sub">Mitratech CaseCloud (formerly AdvoLogix) · Matter Management package</div>
+  <ol>
+    <li><a href="#summary"><span>00</span>Summary</a></li>
+    <li><a href="#architecture"><span>01</span>System architecture</a></li>
+    <li><a href="#design"><span>02</span>System design</a></li>
+    <li><a href="#objects"><span>03</span>Object &amp; API catalogue</a></li>
+    <li><a href="#flow"><span>04</span>Records flow</a></li>
+    <li><a href="#automation"><span>05</span>Automation map</a></li>
+    <li><a href="#guide"><span>06</span>User guide</a></li>
+    <li><a href="#dev"><span>07</span>Developer surface</a></li>
+    <li><a href="#gaps"><span>08</span>Gaps &amp; verification</a></li>
+    <li><a href="#sources"><span>09</span>Sources</a></li>
+  </ol>
+</nav>
+
+<main>
+<header class="hero">
+  <div class="eyebrow">Reverse Engineering Analysis · Salesforce managed package</div>
+  <h1>Mitratech CaseCloud (formerly AdvoLogix)</h1>
+  <p class="lede">How the product is built, how its records relate, how data moves from intake to billing, and how people use it. Every API name carries a confidence label so you can tell published facts from naming-convention inferences.</p>
+  <div class="meta">
+    <span><b>Namespace:</b> <code>advpm</code></span>
+    <span><b>Latest release seen:</b> 1.173.x (Oct 2026)</span>
+    <span><b>Platform:</b> Salesforce (Enterprise Platform licence underneath)</span>
+    <span><b>Research date:</b> 10 Nov 2026</span>
+    <span><b>Method:</b> public vendor docs, no org access</span>
+  </div>
+  <div class="legend">
+    <span><span class="b v">VERIFIED</span> API name printed in vendor documentation</span>
+    <span><span class="b i">INFERRED</span> follows the package's naming pattern; confirm in org</span>
+    <span><span class="b u">UNKNOWN</span> not published; must be read from org metadata</span>
+  </div>
+</header>
+
+<!-- 00 -->
+<section id="summary">
+  <div class="num">00</div>
+  <h2>Executive summary</h2>
+  <p>CaseCloud is a <b>100% Salesforce-native managed package</b> (namespace <code>advpm</code>) that adds a legal data model, about 40 Lightning components, Apex services and trigger logic on top of a Salesforce org. Mitratech acquired AdvoLogix and launched it as CaseCloud in November 2024. The help centre still uses AdvoLogix names for many components.</p>
+  <div class="cards">
+    <div class="card"><h4>Centre of gravity: Matter</h4><p><code>advpm__Matter__c</code> is the hub. Participants, time, expenses, fee arrangements, budgets, rates, activity plans, files and legal holds all hang off it.</p></div>
+    <div class="card"><h4>Two product lines</h4><p><b>Matter Management (MM)</b> for case work, time and billing prep. <b>Spend Management (SM)</b> for corporate legal: outside-counsel invoices, rules, accruals, payments, cost centres.</p></div>
+    <div class="card"><h4>Billing is delegated</h4><p>MM prepares billable time and expense (Billing Preview, dispositions). Invoices, AR and GL sit in <b>Accounting Seed</b> or an external system via export templates / LEDES.</p></div>
+    <div class="card"><h4>Logic lives in triggers</h4><p>Legal hold locks, roll-ups, participant auto-add, time naming and fee-arrangement logic run in packaged Apex and flow triggers. Each can be switched off by custom setting.</p></div>
+    <div class="card"><h4>Integration style</h4><p>Document systems (iManage, NetDocuments, SharePoint, Google Drive, HotDocs), court data (UniCourt), docketing (CalendarRules), service of process (CT SOP), accounting (Accounting Seed).</p></div>
+    <div class="card"><h4>AI layer</h4><p>Einstein Next Best Actions inside MM, plus a separate "Agentforce for Corporate Legal" offering and Legal Analytics for Law Firms in the help centre.</p></div>
+  </div>
+  <div class="note"><b>Scope of this REA.</b> It is built from Mitratech/AdvoLogix public documentation, not from a client org. The vendor publishes very few object API names, so most child-object names are marked INFERRED. Section 08 gives the exact commands to turn every INFERRED label into VERIFIED in about 15 minutes once you have org access.</div>
+</section>
+
+<!-- 01 -->
+<section id="architecture">
+  <div class="num">01</div>
+  <h2>System architecture</h2>
+  <p>Five layers. Everything except the external systems runs inside one Salesforce org and inherits Salesforce security, sharing and the platform's governor limits.</p>
+  <div class="diagram" role="img" aria-label="Layered architecture of CaseCloud on Salesforce">
+  <svg viewBox="0 0 960 560" xmlns="http://www.w3.org/2000/svg" font-family="IBM Plex Sans, Arial, sans-serif">
+    <style>
+      .lyr{fill:var(--surface);stroke:var(--line)}
+      .box{fill:var(--accent-soft);stroke:var(--accent);stroke-width:1}
+      .ext{fill:var(--warn-soft);stroke:var(--warn);stroke-width:1}
+      .t{fill:var(--fg);font-size:12px}
+      .h{fill:var(--muted);font-size:11px;font-family:IBM Plex Mono, monospace;letter-spacing:.06em}
+      .ln{stroke:var(--muted);stroke-width:1.2;fill:none}
+    </style>
+    <!-- Layer 1 -->
+    <rect class="lyr" x="10" y="10" width="700" height="88" rx="8"/>
+    <text class="h" x="24" y="30">1 · EXPERIENCE</text>
+    <rect class="box" x="24" y="40" width="160" height="44" rx="6"/><text class="t" x="34" y="60">Lightning app + tabs</text><text class="t" x="34" y="76">Matter, Time, Intake</text>
+    <rect class="box" x="194" y="40" width="160" height="44" rx="6"/><text class="t" x="204" y="60">Salesforce mobile</text><text class="t" x="204" y="76">Timer, Calendar, Focus</text>
+    <rect class="box" x="364" y="40" width="160" height="44" rx="6"/><text class="t" x="374" y="60">Experience Cloud</text><text class="t" x="374" y="76">client / outside counsel</text>
+    <rect class="box" x="534" y="40" width="164" height="44" rx="6"/><text class="t" x="544" y="60">Outlook / Gmail</text><text class="t" x="544" y="76">Email Related Matters</text>
+    <!-- Layer 2 -->
+    <rect class="lyr" x="10" y="110" width="700" height="110" rx="8"/>
+    <text class="h" x="24" y="130">2 · PACKAGED UI COMPONENTS (LWC / Aura / legacy VF)</text>
+    <text class="t" x="24" y="152">Matter Calendar · Gantt · Kanban · Matter Timeline · Task Checklist · Enhanced Lists · Enhanced Forms</text>
+    <text class="t" x="24" y="172">Billing Preview · Batch Time · Multi Timer · Rates Viewer · Budget Summary · Settlement Calculator</text>
+    <text class="t" x="24" y="192">Conflict Check · Batch Conflict Check · Intake Form Designer · Intake Launcher · Participation Map</text>
+    <text class="t" x="24" y="212">Related Files · Relationship Maps · Date Calculator · Focus Matters · Status · VF: advpm__SearchResults</text>
+    <!-- Layer 3 -->
+    <rect class="lyr" x="10" y="232" width="700" height="110" rx="8"/>
+    <text class="h" x="24" y="252">3 · BUSINESS LOGIC</text>
+    <rect class="box" x="24" y="262" width="215" height="70" rx="6"/><text class="t" x="34" y="282">Apex triggers (packaged)</text><text class="t" x="34" y="298">legal hold · roll-ups ·</text><text class="t" x="34" y="314">integrity · auto-add</text>
+    <rect class="box" x="249" y="262" width="215" height="70" rx="6"/><text class="t" x="259" y="282">Flow triggers + templates</text><text class="t" x="259" y="298">fee arrangement naming ·</text><text class="t" x="259" y="314">Intake → Convert to Matter</text>
+    <rect class="box" x="474" y="262" width="224" height="70" rx="6"/><text class="t" x="484" y="282">Apex services / invocables</text><text class="t" x="484" y="298">ConflictSearchService · RatesService</text><text class="t" x="484" y="314">ActionPlansUtilitiesExternal</text>
+    <!-- Layer 4 -->
+    <rect class="lyr" x="10" y="354" width="700" height="96" rx="8"/>
+    <text class="h" x="24" y="374">4 · DATA (advpm__ custom objects + standard objects)</text>
+    <text class="t" x="24" y="396">Matter · Participant · Time · Expense · Timekeeper · Rate · Rate Group · Fee Arrangement family</text>
+    <text class="t" x="24" y="416">Budget family · UTBMS Code/Set · Intake · Legal Hold Ack · Offer &amp; Demand · Transactions</text>
+    <text class="t" x="24" y="436">Standard: Account · Contact · User · Task/Event · ContentVersion · Note · Approval</text>
+    <!-- Layer 5 -->
+    <rect class="lyr" x="10" y="462" width="700" height="88" rx="8"/>
+    <text class="h" x="24" y="482">5 · CONFIGURATION &amp; SECURITY</text>
+    <text class="t" x="24" y="504">CaseCloud Setup tab (Matters · Work &amp; Tracking · Documents · Connected Apps) · custom settings</text>
+    <text class="t" x="24" y="524">Permission sets AdvoLogixAdmin / AdvoLogixUser · OWD + sharing · community sharing by participant</text>
+    <text class="t" x="24" y="540">Shield Platform Encryption supported · trigger kill-switches</text>
+    <!-- External -->
+    <text class="h" x="740" y="30">EXTERNAL SYSTEMS</text>
+    <rect class="ext" x="740" y="40" width="210" height="58" rx="6"/><text class="t" x="750" y="62">Documents</text><text class="t" x="750" y="80">iManage · NetDocuments · SharePoint</text>
+    <rect class="ext" x="740" y="108" width="210" height="44" rx="6"/><text class="t" x="750" y="126">Google Drive · HotDocs</text><text class="t" x="750" y="142">viewer · assembly</text>
+    <rect class="ext" x="740" y="164" width="210" height="58" rx="6"/><text class="t" x="750" y="186">Courts &amp; docketing</text><text class="t" x="750" y="204">UniCourt · CalendarRules · CT SOP</text>
+    <rect class="ext" x="740" y="234" width="210" height="58" rx="6"/><text class="t" x="750" y="256">Accounting</text><text class="t" x="750" y="274">Accounting Seed (same org)</text>
+    <rect class="ext" x="740" y="304" width="210" height="58" rx="6"/><text class="t" x="750" y="326">Billing export</text><text class="t" x="750" y="344">Export Templates · LEDES</text>
+    <rect class="ext" x="740" y="374" width="210" height="58" rx="6"/><text class="t" x="750" y="396">Other</text><text class="t" x="750" y="414">Revenue Grid · AppExchange</text>
+    <path class="ln" d="M710 70 H740"/><path class="ln" d="M710 300 H740"/><path class="ln" d="M710 400 H740"/><path class="ln" d="M710 190 H740"/>
+  </svg>
+  </div>
+  <h3>Architecture facts</h3>
+  <div class="tbl"><table>
+    <tr><th>Concern</th><th>How CaseCloud does it</th><th>Evidence</th></tr>
+    <tr><td>Packaging</td><td>Managed package "Matter Management", namespace <code>advpm</code>; package upgrades via vendor installer. Integrations ship as separate packages (e.g. Accounting Seed bridge needs MM 1.68.3+).</td><td><span class="b v">VERIFIED</span></td></tr>
+    <tr><td>Licensing</td><td>Each MM licence includes a Salesforce Enterprise Platform licence. Sales Cloud / Service Cloud objects (Leads, Opportunities, Cases) need separate Salesforce licences.</td><td><span class="b v">VERIFIED</span></td></tr>
+    <tr><td>Access model</td><td>Permission sets <code>AdvoLogixAdmin</code> and <code>AdvoLogixUser</code>. Participant-based sharing for Experience Cloud users.</td><td><span class="b v">VERIFIED</span></td></tr>
+    <tr><td>Extensibility</td><td>Global Apex services, invocable actions in Flow, flow templates you clone, Legal Hold and AdvoDoc post-processing callbacks, trigger disable switches.</td><td><span class="b v">VERIFIED</span></td></tr>
+    <tr><td>Reporting</td><td>Native reports and dashboards plus a <b>Transactions</b> object refreshed nightly at midnight (or "Refresh Transactions") that unions estimates and actuals.</td><td><span class="b v">VERIFIED</span></td></tr>
+    <tr><td>Security</td><td>Inherits Salesforce controls; Shield Platform Encryption article exists; vendor FAQ claims FedRAMP.</td><td><span class="b v">VERIFIED</span> vendor claim</td></tr>
+    <tr><td>Known constraint</td><td>Your custom field API names must not equal packaged field names (dynamic queries ignore namespace → duplicate-field error). Billing Preview caps at 1,000 time + expense rows per matter.</td><td><span class="b v">VERIFIED</span></td></tr>
+  </table></div>
+</section>
+
+<!-- 02 -->
+<section id="design">
+  <div class="num">02</div>
+  <h2>System design</h2>
+  <p>The data model below is reconstructed from vendor articles (data model, trigger reference, fee arrangement data model, code samples). Relationship direction is from the trigger behaviour and related lists. Object API names use the confidence labels in section 03.</p>
+  <h3>Core entity relationships</h3>
+<pre class="mermaid">
+erDiagram
+  ACCOUNT ||--o{ MATTER : "Primary Account"
+  MATTER ||--o{ MATTER : "Parent Matter"
+  MATTER ||--o{ PARTICIPANT : has
+  ACCOUNT ||--o{ PARTICIPANT : "as party"
+  CONTACT ||--o{ PARTICIPANT : "as party"
+  USER ||--o{ PARTICIPANT : "as staff"
+  USER ||--o| TIMEKEEPER : "Create Timekeeper"
+  TIMEKEEPER ||--o{ TIME : records
+  MATTER ||--o{ TIME : "billed to"
+  MATTER ||--o{ EXPENSE : "billed to"
+  MATTER ||--o{ RATE : "matter rates"
+  RATE_GROUP ||--o{ RATE : contains
+  TIMEKEEPER ||--o{ RATE : priced
+  FEE_ARRANGEMENT ||--o{ MATTER_FEE_ARRANGEMENT : "source"
+  MATTER ||--o{ MATTER_FEE_ARRANGEMENT : uses
+  MATTER_FEE_ARRANGEMENT ||--o{ TIME : governs
+  MATTER_FEE_ARRANGEMENT ||--o{ EXPENSE : governs
+  MATTER_FEE_ARRANGEMENT ||--o{ RECURRENCE_TRANSACTION : schedules
+  MATTER ||--o{ BUDGET : has
+  BUDGET ||--o{ BUDGET_DETAIL : lines
+  UTBMS_CODE_SET ||--o{ UTBMS_CODE : contains
+  BUDGET_DETAIL }o--|| UTBMS_CODE : coded
+  INTAKE ||--o| MATTER : "converts to"
+  INTAKE ||--o{ CONFLICT_CHECK : screened
+  MATTER ||--o{ LEGAL_HOLD_ACK : "on hold"
+  MATTER ||--o{ OFFER_AND_DEMAND : negotiation
+  MATTER ||--o{ CROSS_REFERENCE_MATTER : related
+  MATTER ||--o{ ACTIVITY_PLAN : "from template"
+  ACTIVITY_PLAN ||--o{ TASK_EVENT : generates
+</pre>
+  <h3>Design patterns the package uses</h3>
+  <div class="tbl"><table>
+    <tr><th>Pattern</th><th>Where</th><th>What it means for an implementer</th></tr>
+    <tr><td>Hub-and-spoke on Matter</td><td>All work, money, documents</td><td>Every integration must resolve inbound data (calls, emails, invoices, docs) to a Matter Id first.</td></tr>
+    <tr><td>Template → instance</td><td>Fee Arrangement → Matter Fee Arrangement; Budget Template → Budget; Activity Plan Template → Activity Plan; Rate Group → Rates</td><td>Admins maintain libraries; matter-level copies can diverge. Reports must say which level they read.</td></tr>
+    <tr><td>Roll-up by trigger</td><td>Time → Matter totals; Budget Detail → Budget → Matter; Summary Budget → Budget</td><td>Bulk loads fire roll-ups. Load in batches and expect locking on hot matters.</td></tr>
+    <tr><td>Legal-hold write lock</td><td>Matter, Participant, Time, Expense, Rate, Note, Comment, Files, Budget, Offer &amp; Demand</td><td>Deletes and re-parenting fail while a matter or its parent is on hold. Data clean-up scripts must check hold status.</td></tr>
+    <tr><td>Lookup → Participant sync</td><td>Managed Account/Contact/User lookups on Matter</td><td>Populating a lookup creates Participant rows automatically. Do not also insert them in your own integration.</td></tr>
+    <tr><td>Disposition + Status on billables</td><td>Time and Expense</td><td>Disposition (Bill / Do Not Bill / Hold / No Charge) decides invoice treatment; Status (Unprocessed / Billed / Not Billed) tracks progress.</td></tr>
+    <tr><td>Nightly reporting union</td><td>Transactions</td><td>Same-day changes are not in Transactions until midnight or a manual refresh.</td></tr>
+  </table></div>
+</section>
+
+<!-- 03 -->
+<section id="objects">
+  <div class="num">03</div>
+  <h2>Object &amp; API catalogue</h2>
+  <p>Labels come from the vendor's documentation. API names are given exactly as published where available.</p>
+  <h3>Matter Management objects</h3>
+  <div class="tbl"><table>
+    <tr><th>Label</th><th>API name</th><th>Confidence</th><th>Published fields &amp; notes</th></tr>
+    <tr><td>Matter</td><td><code>advpm__Matter__c</code></td><td><span class="b v">VERIFIED</span></td><td><code>advpm__Matter_Number__c</code>, <code>advpm__Primary_Account__c</code> (via <code>advpm__Primary_Account__r</code>), <code>advpm__Status__c</code>, <code>advpm__Matter_Preparation__c</code> (formula, v1.148), <code>advpm__Expected_Revenue_Value__c</code> (deprecated). Parent Matter, Auto Add, Legal Hold, Matter Age.</td></tr>
+    <tr><td>Participant</td><td><code>advpm__Participant__c</code></td><td><span class="b v">VERIFIED</span></td><td><code>advpm__Matter__c</code>, <code>advpm__Role__c</code>, <code>advpm__Staff__c</code> (User), <code>advpm__Contact__c</code>. Record types include User, Contact, Other (free-form).</td></tr>
+    <tr><td>Time</td><td><code>advpm__Time__c</code></td><td><span class="b v">VERIFIED</span></td><td><code>advpm__Time_Entry_Lag__c</code> (v1.148). Name auto-built "yyyy-mm-dd : Matter Name". Exported flag, Disposition, Status, Source Fee Arrangement, Matter Fee Arrangement, Cost.</td></tr>
+    <tr><td>Expense</td><td><code>advpm__Expense__c</code></td><td><span class="b i">INFERRED</span></td><td>Disposition, Status, Source Fee Arrangement, Matter Fee Arrangement.</td></tr>
+    <tr><td>Timekeeper</td><td><code>advpm__Timekeeper__c</code></td><td><span class="b i">INFERRED</span></td><td>Auto-created from User "Create Timekeeper" checkbox. Cost from default role.</td></tr>
+    <tr><td>Rate</td><td><code>advpm__Rate__c</code></td><td><span class="b i">INFERRED</span></td><td>One default per Timekeeper / Matter / Role. Cost filled from Timekeeper.</td></tr>
+    <tr><td>Rate Group</td><td><code>advpm__Rate_Group__c</code></td><td><span class="b i">INFERRED</span></td><td>Cannot delete while Rates exist.</td></tr>
+    <tr><td>Fee Arrangement</td><td><code>advpm__Fee_Arrangement__c</code></td><td><span class="b i">INFERRED</span></td><td>Record types: Contingency Fee, Fixed Fee, Capped Fee. Holds Matter count, Total Cost, Price As Delivered roll-ups.</td></tr>
+    <tr><td>Matter Fee Arrangement</td><td><code>advpm__Matter_Fee_Arrangement__c</code></td><td><span class="b i">INFERRED</span> object · <span class="b v">VERIFIED</span> fields</td><td><code>advpm__Matter__c</code>, <code>advpm__Source_Fee_Arrangement__c</code>, <code>advpm__Matter_Price__c</code>, <code>advpm__Fee_Arrangement_Price__c</code>, <code>advpm__Discount_Percentage__c</code>, <code>advpm__Contingency_Percentage__c</code>, <code>advpm__Total_Unit_Caps__c</code>, <code>advpm__Recurrence__c</code>, <code>advpm__Default_for_Fees__c</code>, <code>advpm__Default_for_Expenses__c</code>, <code>advpm__Start_Date__c</code>, <code>advpm__End_Date__c</code>, <code>advpm__NextBillDate__c</code>, <code>advpm__LastBillDate__c</code>, <code>advpm__Transactions_Billed_To_Date__c</code>, <code>advpm__Transactions_To_Be_Billed__c</code>, <code>advpm__Total_Price__c</code>, <code>advpm__Total_Cost_as_Priced__c</code>, <code>advpm__As_Priced_Profit_Margin__c</code>, <code>advpm__Total_Cost_for_Time__c</code>, <code>advpm__Total_Cost_for_Expenses__c</code>, <code>advpm__Total_Cost_as_Delivered__c</code>, <code>advpm__As_Delivered_Profit_Margin__c</code>, <code>advpm__Description__c</code></td></tr>
+    <tr><td>Fee Arrangement Feature / Matter Fee Arrangement Feature</td><td><code>advpm__…Feature__c</code></td><td><span class="b u">UNKNOWN</span></td><td>Name auto-filled from Code or Role by flow trigger.</td></tr>
+    <tr><td>Budget Matter Fee Arrangement</td><td>—</td><td><span class="b u">UNKNOWN</span></td><td>Matter filled from parent Budget; Source Fee Arrangement from MFA.</td></tr>
+    <tr><td>Recurrence Transaction</td><td>—</td><td><span class="b u">UNKNOWN</span></td><td>Scheduled by recurring MFAs; fills Time reference, Account (Matter's Primary Account), Source Fee Arrangement.</td></tr>
+    <tr><td>Party</td><td>—</td><td><span class="b u">UNKNOWN</span></td><td>Fee-arrangement parties (representatives / plaintiffs); Account, Contact, User, Role copied from Participant.</td></tr>
+    <tr><td>Budget</td><td><code>advpm__Budget__c</code></td><td><span class="b i">INFERRED</span> object · <span class="b v">VERIFIED</span> fields</td><td><code>advpm__Budget_Name__c</code>, <code>advpm__Active__c</code>, <code>advpm__Total_Number_of_Child_Budgets__c</code>, <code>advpm__Rolled_up_Fee_Budget__c</code>, <code>advpm__Rolled_up_Expense_Budget__c</code>, <code>advpm__Rolled_up_Total_Budget__c</code>, <code>advpm__Remaining_Budget__c</code>, <code>advpm__Total_Budget_Percentage_Remaining__c</code>, <code>advpm__Total_Fee_Percentage_Remaining__c</code>, <code>advpm__Total_Expense_Percentage_Remaining__c</code></td></tr>
+    <tr><td>Budget Detail · Summary Budget · Detail Budget · Budget Template · Budget Template Detail</td><td>—</td><td><span class="b u">UNKNOWN</span></td><td>Lock flag on Budget blocks deletes; UTBMS code-set must match between parent and detail.</td></tr>
+    <tr><td>UTBMS Code Set / UTBMS Code</td><td>—</td><td><span class="b u">UNKNOWN</span></td><td>Packaged standard sets cannot be deleted; one default per Account or Matter.</td></tr>
+    <tr><td>Intake</td><td><code>advpm__Intake__c</code></td><td><span class="b i">INFERRED</span></td><td>Status: Requested → In Progress → Submitted → Approved / Rejected. Type (global value set shared with Matter Type), Primary Account, Primary Contact, Start Date, Description, Approver, Matter Record Type.</td></tr>
+    <tr><td>Conflict Check (+ results)</td><td>—</td><td><span class="b u">UNKNOWN</span></td><td>Created by <code>ConflictSearchService</code>; re-pointed to Matter on intake conversion.</td></tr>
+    <tr><td>Matter Legal Hold Acknowledgement</td><td>—</td><td><span class="b u">UNKNOWN</span></td><td>Created by Matter legal-hold trigger; insert sends notification emails.</td></tr>
+    <tr><td>Cross Reference Matter · Offer and Demand · Comment · Activity Plan · Activity Plan Template · Skill &amp; Certification · Profile</td><td>—</td><td><span class="b u">UNKNOWN</span></td><td>Skill &amp; Certification: <code>advpm__Year_Text__c</code> <span class="b v">VERIFIED</span> (replaces <code>advpm__Year__c</code>).</td></tr>
+    <tr><td>Transactions</td><td>—</td><td><span class="b u">UNKNOWN</span></td><td>Reporting union of Time, Expense, Budget, Budget Detail, UTBMS; plus Invoice Line Items, Accruals with SM.</td></tr>
+    <tr><td>Task (standard)</td><td><code>Task</code></td><td><span class="b v">VERIFIED</span></td><td>Packaged field <code>advpm__Task_Efficiency_Score__c</code>.</td></tr>
+  </table></div>
+  <h3>Spend Management objects (corporate legal)</h3>
+  <div class="tbl"><table>
+    <tr><th>Label</th><th>API name</th><th>Confidence</th><th>Notes</th></tr>
+    <tr><td>Invoice</td><td>—</td><td><span class="b u">UNKNOWN</span></td><td>Links to Matter and Account. State Pass / Flag / Reject rolled up from lines. LEDES import. Approval process is customer-built.</td></tr>
+    <tr><td>Invoice Line Item</td><td>—</td><td><span class="b u">UNKNOWN</span></td><td>"Initiate Rule Scan" checkbox re-runs rules. UTBMS task/expense codes.</td></tr>
+    <tr><td>Invoice Rule / entries</td><td>—</td><td><span class="b u">UNKNOWN</span></td><td>Scoped to Account or Matter; supports aggregate functions in entry criteria; import/export.</td></tr>
+    <tr><td>Accrual · Payment · Payment Allocation · Cost Center · cost allocations</td><td>—</td><td><span class="b u">UNKNOWN</span></td><td>Accrual notifications and reconciliation; payment allocations; matter and invoice cost allocations.</td></tr>
+  </table></div>
+  <h3>Accounting Seed bridge</h3>
+  <div class="tbl"><table>
+    <tr><th>Label</th><th>API name</th><th>Confidence</th><th>Notes</th></tr>
+    <tr><td>Billing / Billing Line</td><td><code>AcctSeed__Billing__c</code> / <code>AcctSeed__Billing_Line__c</code></td><td><span class="b i">INFERRED</span></td><td>One Billing per Matter per run; one line per Time or Expense record. LEDES 1998B export.</td></tr>
+    <tr><td>Project</td><td><code>AcctSeed__Project__c</code></td><td><span class="b i">INFERRED</span></td><td>Auto-created and linked one-to-one with each Matter.</td></tr>
+  </table></div>
+</section>
+
+<!-- 04 -->
+<section id="flow">
+  <div class="num">04</div>
+  <h2>Records flow with API names</h2>
+  <p>End-to-end lifecycle of a law-firm matter, then the corporate-legal spend flow. Each step shows the record that is created or changed and the automation that fires.</p>
+<pre class="mermaid">
+flowchart LR
+  A["Intake Form / Intake tab<br/>advpm__Intake__c (Requested)"] --> B["Conflict Check<br/>ConflictSearchService"]
+  B --> C{"Approval<br/>Submitted → Approved"}
+  C -- Rejected --> X["Intake closed"]
+  C -- Approved --> D["Flow: AdvoLogix Intake -<br/>Convert to Matter"]
+  D --> E["advpm__Matter__c<br/>record type from intake"]
+  E --> F["advpm__Participant__c<br/>auto-add + lookup sync"]
+  E --> G["Activity Plan → Task/Event<br/>ApplyActionPlan"]
+  E --> H["Rates / Rate Group<br/>RatesService.copyRates"]
+  E --> I["Matter Fee Arrangement<br/>from Fee Arrangement"]
+  E --> J["Budget + Budget Details"]
+  G --> K["advpm__Time__c<br/>Log Time trigger"]
+  H --> K
+  I --> K
+  I --> L["Expense"]
+  I --> R["Recurrence Transaction"]
+  K --> M["Billing Preview<br/>Disposition + Status"]
+  L --> M
+  M --> N["AcctSeed Billing + Lines<br/>or Export Template / LEDES"]
+  K --> T["Transactions (nightly)"]
+  L --> T
+  J --> T
+</pre>
+  <h3>Step-by-step flow (Matter Management)</h3>
+  <div class="tbl"><table>
+    <tr><th>#</th><th>Business event</th><th>Record &amp; API name</th><th>Key fields / links</th><th>Automation that fires</th></tr>
+    <tr><td class="n">1</td><td>Request arrives (web form, staff entry)</td><td>Intake <code>advpm__Intake__c</code> <span class="b i">INF</span></td><td>Status = Requested; Type; Primary Account; Primary Contact; Matter Record Type</td><td>Intake Form (public URL or Intake Launcher). Twopir-style variant: platform event → flow.</td></tr>
+    <tr><td class="n">2</td><td>Conflict screening</td><td>Conflict Check <span class="b u">UNK</span></td><td>searchTerm, description, matterId, contextRecordId (= Intake Id)</td><td><code>ConflictSearchService.executeSearch()</code> or Flow action "Initiate Conflict Check" (queued job). Batch Conflict Check runs up to 20.</td></tr>
+    <tr><td class="n">3</td><td>Approval</td><td>Intake</td><td>Status Submitted → Approved / Rejected; Approver</td><td>Customer-built approval process (not packaged).</td></tr>
+    <tr><td class="n">4</td><td>Open the matter</td><td>Matter <code>advpm__Matter__c</code> <span class="b v">VER</span></td><td><code>advpm__Primary_Account__c</code>, <code>advpm__Matter_Number__c</code>, <code>advpm__Status__c</code>, RecordTypeId</td><td>Flow template "AdvoLogix Intake - Convert to Matter"; links Intake to Matter; re-points Conflict Checks to the Matter.</td></tr>
+    <tr><td class="n">5</td><td>Who is involved</td><td>Participant <code>advpm__Participant__c</code> <span class="b v">VER</span></td><td><code>advpm__Matter__c</code>, <code>advpm__Role__c</code>, <code>advpm__Contact__c</code>, <code>advpm__Staff__c</code></td><td>Matter triggers: Auto Add (custom settings "Auto Participant Account/Contact") and Lookup Participants.</td></tr>
+    <tr><td class="n">6</td><td>Plan the work</td><td>Activity Plan → <code>Task</code> / <code>Event</code></td><td>Template Id, record Id, base object <code>advpm__Matter__c</code></td><td><code>ActionPlansUtilitiesExternal.ApplyActionPlan()</code> (async). Activity update trigger re-dates dependants.</td></tr>
+    <tr><td class="n">7</td><td>Set pricing</td><td>Rate <code>advpm__Rate__c</code> <span class="b i">INF</span>, Rate Group</td><td>Timekeeper, Matter, Role, default flag</td><td><code>RatesService.copyRates()</code> / "Copy Rates" action; integrity trigger: one default per Timekeeper/Matter/Role.</td></tr>
+    <tr><td class="n">8</td><td>Agree fee terms</td><td>Matter Fee Arrangement <span class="b i">INF</span></td><td><code>advpm__Matter__c</code>, <code>advpm__Source_Fee_Arrangement__c</code>, <code>advpm__Default_for_Fees__c</code>, <code>advpm__Recurrence__c</code>, <code>advpm__NextBillDate__c</code></td><td>Trigger: one default fee + one default expense MFA per matter; on-time fees processed; future recurring transactions scheduled; flow sets Contingency Fee Arrangement on Matter.</td></tr>
+    <tr><td class="n">9</td><td>Budget</td><td>Budget <code>advpm__Budget__c</code> <span class="b i">INF</span> → Budget Detail</td><td><code>advpm__Rolled_up_Total_Budget__c</code>, <code>advpm__Remaining_Budget__c</code>; UTBMS codes</td><td>Aggregate triggers roll details → budget → matter; Budget AdvoDoc for PDF.</td></tr>
+    <tr><td class="n">10</td><td>Record time</td><td>Time <code>advpm__Time__c</code> <span class="b v">VER</span></td><td>Matter, Timekeeper, hours, Disposition, Status, Matter Fee Arrangement, <code>advpm__Time_Entry_Lag__c</code></td><td>Name auto-set; Source Fee Arrangement + Cost filled by flow; Aggregate trigger rolls hours and amount to Matter. Also created by Task/Event and ContentVersion "Log Time" triggers.</td></tr>
+    <tr><td class="n">11</td><td>Record expenses</td><td>Expense <code>advpm__Expense__c</code> <span class="b i">INF</span></td><td>Matter, amount, Disposition, Status, Matter Fee Arrangement</td><td>Flow fills Source Fee Arrangement. Optional AP integration with Accounting Seed.</td></tr>
+    <tr><td class="n">12</td><td>Pre-bill review</td><td>Billing Preview (no object)</td><td>URL params <code>advpm__pbaid</code>, <code>advpm__pbmid</code>, <code>advpm__pbtid</code>, <code>advpm__pbdi</code>, <code>advpm__pbst</code>, date params</td><td>Groups Account → Matter → Time/Expense. Disposition: Bill / Do Not Bill / Hold. Status: Unprocessed / Billed / Not Billed.</td></tr>
+    <tr><td class="n">13</td><td>Invoice</td><td><code>AcctSeed__Billing__c</code> + lines <span class="b i">INF</span>, or Export Template file</td><td>One billing per matter; one line per time/expense</td><td>Accounting Seed bridge; LEDES 1998B export; un-bill supported. Export Template trigger locks exported Time.</td></tr>
+    <tr><td class="n">14</td><td>Report</td><td>Transactions <span class="b u">UNK</span></td><td>Estimates vs actuals by matter, UTBMS code</td><td>Nightly job at midnight or "Refresh Transactions".</td></tr>
+    <tr><td class="n">15</td><td>Preserve / close</td><td>Matter + Legal Hold Ack</td><td>Legal Hold flag; Matter Status rules</td><td>Legal hold triggers lock child deletes; acknowledgements emailed; Matter Status Configuration (v1.173) closes matching matters by background job.</td></tr>
+  </table></div>
+  <h3>Spend Management flow (corporate legal department)</h3>
+<pre class="mermaid">
+flowchart LR
+  A["Outside counsel portal<br/>Upload Invoice / LEDES"] --> B["Invoice + Line Items<br/>linked to Matter, Account"]
+  B --> C["Invoice Rules scan<br/>Pass / Flag / Reject"]
+  C --> D["Invoice state rolls up<br/>any Reject → Reject"]
+  D --> E["Mass Submit for Approval<br/>Invoices to Approve"]
+  E --> F["Approved"]
+  F --> G["Payments + Allocations"]
+  F --> H["Accruals + Reconciliation"]
+  F --> I["Cost Center allocations"]
+  B --> J["Budget vs actual<br/>Transactions"]
+</pre>
+</section>
+
+<!-- 05 -->
+<section id="automation">
+  <div class="num">05</div>
+  <h2>Automation map</h2>
+  <p>Packaged automation you inherit. Any AdvoLogix trigger can be turned off through custom settings (names provided by vendor support).</p>
+  <div class="tbl"><table>
+    <tr><th>Object</th><th>Type</th><th>Events</th><th>Behaviour</th></tr>
+    <tr><td>Matter</td><td>Apex</td><td>Delete</td><td>Cascade-delete Activity Plans; block if default rates exist; block if matter or parent on Legal Hold.</td></tr>
+    <tr><td>Matter</td><td>Apex</td><td>Create, Update</td><td>Legal Hold tag on content + create Legal Hold Acknowledgements; Auto Add participants; Lookup Participants; block parent change while parent on hold.</td></tr>
+    <tr><td>Account / Contact</td><td>Apex</td><td>Delete</td><td>Cascade Activity Plans; block if participant on a Legal Hold matter.</td></tr>
+    <tr><td>Task / Event</td><td>Apex</td><td>Create, Update, Delete</td><td>Sync to Activity Plan and re-date dependants; Log Time creates/updates Time; legal-hold locks.</td></tr>
+    <tr><td>User</td><td>Apex</td><td>Create, Update</td><td>"Create Timekeeper" checkbox creates Timekeeper.</td></tr>
+    <tr><td>Time</td><td>Apex + Flow</td><td>Create, Update, Delete</td><td>Auto name; roll hours and amount to Matter; lock when Exported; fill Source Fee Arrangement and Cost; legal-hold locks.</td></tr>
+    <tr><td>Expense</td><td>Apex + Flow</td><td>Create, Update, Delete</td><td>Fill Source Fee Arrangement; legal-hold delete lock.</td></tr>
+    <tr><td>Rate / Rate Group / Timekeeper</td><td>Apex + Flow</td><td>Create, Update, Delete</td><td>One default per Timekeeper/Matter/Role; Cost propagation; delete protection.</td></tr>
+    <tr><td>Matter Fee Arrangement</td><td>Apex + Flow</td><td>Create, Update, Delete, Undelete</td><td>Single default fee/expense; on-time fee processing; recurring schedule; parent roll-ups; contingency default on Matter; start-date guard.</td></tr>
+    <tr><td>Budget family</td><td>Apex</td><td>Create, Update, Delete</td><td>Roll-ups to Budget and Matter; lock flag; UTBMS set consistency.</td></tr>
+    <tr><td>ContentVersion</td><td>Apex</td><td>Create, Update, Delete</td><td>Legal Hold tag; Chatter post to Matter feed; Log Time.</td></tr>
+    <tr><td>Legal Hold Acknowledgement</td><td>Apex</td><td>Create</td><td>Emails declared recipients.</td></tr>
+    <tr><td>UTBMS Code / Set</td><td>Apex</td><td>Create, Update, Delete</td><td>Protect packaged codes; one default per Account/Matter.</td></tr>
+  </table></div>
+</section>
+
+<!-- 06 -->
+<section id="guide">
+  <div class="num">06</div>
+  <h2>User guide</h2>
+  <p>Task-based guide by role, using the packaged screens. Paths assume Lightning Experience with the CaseCloud app selected.</p>
+  <div class="guide">
+    <div class="card"><div class="role">Intake coordinator</div><h4>Take in a new request</h4><ol>
+      <li>Open the Intake Launcher (home page or utility bar) or the Intake tab → New.</li>
+      <li>Fill Type, Primary Account, Primary Contact, Description, Matter Record Type.</li>
+      <li>From the Intake record run a Conflict Check; review and disposition each hit.</li>
+      <li>Submit for Approval (status → Submitted).</li>
+      <li>After approval, click <b>Convert to Matter</b>. The new Matter opens with conflicts linked.</li>
+    </ol></div>
+    <div class="card"><div class="role">Attorney / case manager</div><h4>Run the matter</h4><ol>
+      <li>Add people in Participation Map or the Participant list (role per matter).</li>
+      <li>Apply an Activity Plan template to generate dated tasks and events.</li>
+      <li>Work from Task Checklist, Kanban, Gantt or Matter Calendar.</li>
+      <li>Use Date Calculator for deadlines (business-day rules; CalendarRules if licensed).</li>
+      <li>Read history in Matter Timeline; search everything in Matter Search.</li>
+      <li>Pin active cases to <b>Focus Matters</b> for the home page.</li>
+    </ol></div>
+    <div class="card"><div class="role">Timekeeper</div><h4>Capture time and expenses</h4><ol>
+      <li>Confirm you have a Timekeeper record (admin ticks Create Timekeeper on your user).</li>
+      <li>Start a timer from Multi Timer (utility bar or mobile); on a matter page it auto-assigns.</li>
+      <li>Or use Batch Time to enter a day's entries in one dialog.</li>
+      <li>Pick the Matter Fee Arrangement if the matter has several.</li>
+      <li>Log expenses with the expense form; add receipts in Related Files.</li>
+    </ol></div>
+    <div class="card"><div class="role">Billing / finance</div><h4>Prepare and issue bills</h4><ol>
+      <li>Open Billing Preview; set date range, account, matter, timekeeper.</li>
+      <li>Filter Disposition and Status; inline-edit or Mass Edit lines.</li>
+      <li>Set Do Not Bill / Hold / No Charge where needed.</li>
+      <li>With Accounting Seed: create Billings (one per matter) and export LEDES.</li>
+      <li>Without: run an Export Template; exported Time locks automatically.</li>
+      <li>Check Budget Summary and Transactions for budget vs actual.</li>
+    </ol></div>
+    <div class="card"><div class="role">Legal ops (corporate)</div><h4>Review outside-counsel invoices</h4><ol>
+      <li>Counsel uploads invoices (or LEDES) through the provider portal.</li>
+      <li>Invoice Rules mark lines Pass / Flag / Reject.</li>
+      <li>Fix or re-scan lines with Initiate Rule Scan.</li>
+      <li>Approve from Invoices to Approve; then record payments, accruals and cost-centre splits.</li>
+    </ol></div>
+    <div class="card"><div class="role">Administrator</div><h4>Configure the package</h4><ol>
+      <li>Assign <code>AdvoLogixUser</code> / <code>AdvoLogixAdmin</code> permission sets and licences.</li>
+      <li>CaseCloud Setup → Matters: status rules, timeline, legal hold, key dates, conflict objects, participants.</li>
+      <li>Work &amp; Tracking: activity plans, at-a-glance charts, assignment rule sets.</li>
+      <li>Documents: AdvoDoc, files and content. Connected Apps: CalendarRules, Spend Management, Google Drive.</li>
+      <li>Build the Intake approval process and clone the Convert to Matter flow if you need custom mapping.</li>
+    </ol></div>
+  </div>
+</section>
+
+<!-- 07 -->
+<section id="dev">
+  <div class="num">07</div>
+  <h2>Developer surface</h2>
+  <p>Published entry points for automation and integration. All signatures below are quoted from vendor articles.</p>
+  <div class="tbl"><table>
+    <tr><th>Entry point</th><th>Use</th><th>Returns</th></tr>
+    <tr><td><code>ConflictSearchService.executeSearch(List&lt;InputWrapper&gt;)</code></td><td>Queue conflict checks (searchTerm required; description, matterId, contextRecordId optional). Flow: "Initiate Conflict Check".</td><td><code>ResultWrapper</code>: body, status 'TRUE'/'FALSE'</td></tr>
+    <tr><td><code>ActionPlansUtilitiesExternal.ApplyActionPlan(name, templateId, recordIds, objectApiName)</code></td><td>Create Activity Plans on <code>advpm__Matter__c</code>, Account or Contact (async). Also add / update / delete via code.</td><td>JSON: success, result</td></tr>
+    <tr><td><code>RatesService.copyRates(fromMatterId, fromRateGroupId, toMatterId, copyDefaultFlag)</code></td><td>Copy rates to a matter. Flow / Process Builder: "Copy Rates".</td><td>JSON: success, result</td></tr>
+    <tr><td>Rate Group apply, Fee Arrangement retrieve, Date Calculation, Matter Search, AdvoDoc create</td><td>Invocable actions / APIs documented in the help centre.</td><td>varies</td></tr>
+    <tr><td>Legal Hold callback</td><td>Your class receives JSON with recordsList (recordId, status), success, result when hold is added or removed.</td><td>—</td></tr>
+    <tr><td><code>/apex/advpm__SearchResults?id=&amp;nm=&amp;stsr=&amp;stob=advpm__Matter__c&amp;srch_only=</code></td><td>Matter-scoped search page (legacy VF).</td><td>page</td></tr>
+  </table></div>
+<pre class="codeblk">// Queue a conflict check against an Intake (from vendor sample)
+ConflictSearchService.InputWrapper input = new ConflictSearchService.InputWrapper();
+input.searchTerm      = '(John OR Jane) AND Smith';
+input.description     = 'Intake conflict check';
+input.contextRecordId = intakeId;
+List&lt;ConflictSearchService.ResultWrapper&gt; r =
+    ConflictSearchService.executeSearch(new List&lt;ConflictSearchService.InputWrapper&gt;{ input });</pre>
+</section>
+
+<!-- 08 -->
+<section id="gaps">
+  <div class="num">08</div>
+  <h2>Gaps &amp; how to verify in an org</h2>
+  <p>What public documentation does not give, and the fastest way to close each gap.</p>
+  <div class="tbl"><table>
+    <tr><th>Gap</th><th>Why it matters</th><th>Close it with</th></tr>
+    <tr><td>API names of ~25 child objects</td><td>Integration mappings and SOQL</td><td><code>sf sobject list --sobject custom -o ORG | grep advpm__</code></td></tr>
+    <tr><td>Field-level schema per object</td><td>Data migration, record-flow field mapping</td><td><code>sf sobject describe -s advpm__Time__c -o ORG</code> (loop all advpm objects)</td></tr>
+    <tr><td>Lookup vs master-detail</td><td>Sharing, cascade delete, roll-ups</td><td>Schema Builder or describe output (<code>relationshipOrder</code>, <code>cascadeDelete</code>)</td></tr>
+    <tr><td>Trigger kill-switch setting names</td><td>Bulk loads and migrations</td><td>Setup → Custom Settings filtered to namespace advpm; KB [1177] for Accounting Seed triggers</td></tr>
+    <tr><td>Spend Management namespace</td><td>Invoice integrations</td><td>Installed Packages page; describe invoice objects</td></tr>
+    <tr><td>Picklist values (Disposition, Status, Role, Matter Status)</td><td>Reporting and automation conditions</td><td><code>sf data query -q "SELECT ... FROM FieldDefinition"</code> or describe</td></tr>
+  </table></div>
+  <div class="note ok">With read-only org access this whole REA can be upgraded to fully VERIFIED, with a generated field dictionary and an exact ERD.</div>
+</section>
+
+<!-- 09 -->
+<section id="sources">
+  <div class="num">09</div>
+  <h2>Sources</h2>
+  <p>All accessed 10 Nov 2026.</p>
+  <ul class="src">
+    <li><a href="https://mitratech.com/products/casecloud/">Mitratech CaseCloud product page</a></li>
+    <li><a href="https://mitratech.com/resource-hub/pressreleases/mitratech-debuts-casecloud/">Mitratech debuts CaseCloud (press release)</a></li>
+    <li><a href="https://help.advologix.com/">CaseCloud Help centre</a></li>
+    <li><a href="https://help.advologix.com/m/Use_and_Learn_MM">Use &amp; Learn (MM)</a></li>
+    <li><a href="https://help.advologix.com/m/Configuration_Automation_MM">Configuration &amp; Automation (MM)</a></li>
+    <li><a href="https://help.advologix.com/m/Use_and_Learn_SM">Use &amp; Learn (SM)</a></li>
+    <li><a href="https://help.advologix.com/a/458988-matter-management-data-object-triggers">Data object triggers</a></li>
+    <li><a href="https://help.advologix.com/a/688929-matter-management-functional-hierarchy">Functional hierarchy</a></li>
+    <li><a href="https://help.advologix.com/a/1702385-fee-arrangement-data-model">Fee arrangement data model</a></li>
+    <li><a href="https://help.advologix.com/a/1706855-how-do-i-retrieve-a-list-of-matter-fee-arrangements-via-automation">Matter fee arrangements via automation</a></li>
+    <li><a href="https://help.advologix.com/a/1812130-june-2024-version-1-148-x">Release 1.148.x</a></li>
+    <li><a href="https://help.advologix.com/a/2097731-october-2026-version-1-173-x">Release 1.173.x</a></li>
+    <li><a href="https://help.advologix.com/a/1252650-netdocuments-integration">NetDocuments integration</a></li>
+    <li><a href="https://help.advologix.com/a/1469187-billing-preview-legacy">Billing Preview (legacy)</a></li>
+    <li><a href="https://help.advologix.com/a/716570-advologix-lightning-components">Lightning components</a></li>
+    <li><a href="https://help.advologix.com/a/266279-creating-an-activity-plan-via-code">Activity Plan via code</a></li>
+    <li><a href="https://help.advologix.com/a/861898-initiating-a-conflict-check-through-automation-or-code">Conflict check via code</a></li>
+    <li><a href="https://help.advologix.com/a/1016758-copying-rates-through-automation-or-code">Copy rates via code</a></li>
+    <li><a href="https://help.advologix.com/a/1014370-legal-hold-api">Legal Hold API</a></li>
+    <li><a href="https://help.advologix.com/a/2069908-introduction-to-intakes">Introduction to Intakes</a></li>
+    <li><a href="https://help.advologix.com/a/1583887-introduction-to-transactions">Introduction to Transactions</a></li>
+    <li><a href="https://help.advologix.com/a/1436482-introduction-to-matter-participants">Matter participants</a></li>
+    <li><a href="https://help.advologix.com/a/314945-how-do-i-send-email-notifications-to-participants">Participant email (legacy Apex)</a></li>
+    <li><a href="https://help.advologix.com/a/318161-matter-search-api-call">Matter Search API call</a></li>
+    <li><a href="https://help.advologix.com/a/1383473-introduction-to-invoices">Introduction to Invoices (SM)</a></li>
+    <li><a href="https://help.advologix.com/a/1147968-matter-management-permission-sets">Permission sets</a></li>
+    <li><a href="https://help.advologix.com/a/750257-advologix-matter-management-license-capabilities">Licence capabilities</a></li>
+    <li><a href="https://advologixpm.screenstepslive.com/a/299547-introduction-to-the-accounting-seed-integration">Accounting Seed integration</a></li>
+  </ul>
+</section>
+</main>
+</div>

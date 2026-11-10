@@ -1,0 +1,2 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata"><fullName>Depends_On__c</fullName><label>Depends On</label><deleteConstraint>SetNull</deleteConstraint><referenceTo>Activity_Plan_Template_Item__c</referenceTo><relationshipLabel>Dependent Items</relationshipLabel><relationshipName>Dependent_Items</relationshipName><required>false</required><type>Lookup</type></CustomField>

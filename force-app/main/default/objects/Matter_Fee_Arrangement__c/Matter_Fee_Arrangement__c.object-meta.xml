@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+  
+  <deploymentStatus>Deployed</deploymentStatus>
+  <description>The fee terms agreed on one matter, copied from a firm fee arrangement.</description>
+  <enableActivities>false</enableActivities>
+  <enableBulkApi>true</enableBulkApi>
+  <enableFeeds>false</enableFeeds>
+  <enableHistory>false</enableHistory>
+  <enableLicensing>false</enableLicensing>
+  <enableReports>true</enableReports>
+  <enableSearch>true</enableSearch>
+  <enableSharing>true</enableSharing>
+  <enableStreamingApi>true</enableStreamingApi>
+  <externalSharingModel>ControlledByParent</externalSharingModel>
+  <label>Matter Fee Arrangement</label>
+  <nameField><displayFormat>MFA-{00000}</displayFormat><label>MFA Number</label><trackHistory>false</trackHistory><type>AutoNumber</type></nameField>
+  <pluralLabel>Matter Fee Arrangements</pluralLabel>
+  <sharingModel>ControlledByParent</sharingModel>
+  <visibility>Public</visibility>
+</CustomObject>

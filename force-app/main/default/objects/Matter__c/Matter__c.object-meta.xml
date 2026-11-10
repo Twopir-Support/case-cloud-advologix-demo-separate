@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+  <compactLayoutAssignment>Matter_Management_Compact</compactLayoutAssignment>
+  <deploymentStatus>Deployed</deploymentStatus>
+  <description>The legal matter (case). Hub for participants, work, time, expenses, budgets and invoices.</description>
+  <enableActivities>true</enableActivities>
+  <enableBulkApi>true</enableBulkApi>
+  <enableFeeds>false</enableFeeds>
+  <enableHistory>true</enableHistory>
+  <enableLicensing>false</enableLicensing>
+  <enableReports>true</enableReports>
+  <enableSearch>true</enableSearch>
+  <enableSharing>true</enableSharing>
+  <enableStreamingApi>true</enableStreamingApi>
+  <externalSharingModel>Private</externalSharingModel>
+  <label>Matter</label>
+  <nameField><label>Matter Name</label><trackHistory>false</trackHistory><type>Text</type></nameField>
+  <pluralLabel>Matters</pluralLabel>
+  <sharingModel>ReadWrite</sharingModel>
+  <visibility>Public</visibility>
+</CustomObject>

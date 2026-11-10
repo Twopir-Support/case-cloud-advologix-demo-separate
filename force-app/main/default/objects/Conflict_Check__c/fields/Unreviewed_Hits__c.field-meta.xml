@@ -1,0 +1,2 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata"><fullName>Unreviewed_Hits__c</fullName><label>Unreviewed Hits</label><summaryFilterItems><field>Conflict_Check_Result__c.Resolution__c</field><operation>equals</operation><value>Unreviewed</value></summaryFilterItems><summaryForeignKey>Conflict_Check_Result__c.Conflict_Check__c</summaryForeignKey><summaryOperation>count</summaryOperation><type>Summary</type></CustomField>

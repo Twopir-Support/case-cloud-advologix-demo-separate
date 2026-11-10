@@ -1,0 +1,34 @@
+<template>
+    <lightning-card title="Batch Time Entry" icon-name="standard:timesheet">
+        <div slot="actions">
+            <lightning-button label="Add row" icon-name="utility:add" onclick={addRow} class="slds-m-right_x-small"></lightning-button>
+            <lightning-button variant="brand" label="Save all" onclick={save} disabled={saving}></lightning-button>
+        </div>
+        <div class="slds-p-horizontal_medium">
+            <template lwc:if={error}><p class="slds-text-color_error slds-m-bottom_small">{error}</p></template>
+            <template for:each={rows} for:item="r">
+                <div key={r.key} class="slds-grid slds-wrap slds-gutters_x-small slds-border_bottom slds-p-bottom_x-small slds-m-bottom_x-small">
+                    <div class="slds-col slds-size_1-of-1 slds-medium-size_3-of-12">
+                        <lightning-record-picker label="Matter" object-api-name="Matter__c" value={r.matterId} data-key={r.key} data-field="matterId" onchange={pick}></lightning-record-picker>
+                    </div>
+                    <div class="slds-col slds-size_1-of-1 slds-medium-size_2-of-12">
+                        <lightning-record-picker label="Timekeeper" object-api-name="Timekeeper__c" value={r.timekeeperId} data-key={r.key} data-field="timekeeperId" onchange={pick}></lightning-record-picker>
+                    </div>
+                    <div class="slds-col slds-size_1-of-2 slds-medium-size_2-of-12">
+                        <lightning-input type="date" label="Date" value={r.entryDate} data-key={r.key} data-field="entryDate" onchange={edit}></lightning-input>
+                    </div>
+                    <div class="slds-col slds-size_1-of-2 slds-medium-size_1-of-12">
+                        <lightning-input type="number" step="0.1" label="Hours" value={r.hours} data-key={r.key} data-field="hours" onchange={edit}></lightning-input>
+                    </div>
+                    <div class="slds-col slds-size_1-of-1 slds-medium-size_3-of-12">
+                        <lightning-input label="Narrative" value={r.narrative} data-key={r.key} data-field="narrative" onchange={edit}></lightning-input>
+                    </div>
+                    <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-12 slds-align-bottom">
+                        <lightning-button-icon icon-name="utility:delete" alternative-text="Remove row" data-key={r.key} onclick={removeRow}></lightning-button-icon>
+                    </div>
+                </div>
+            </template>
+            <p class="slds-text-body_small slds-text-color_weak">Rates and fee arrangements are filled in automatically when you save.</p>
+        </div>
+    </lightning-card>
+</template>

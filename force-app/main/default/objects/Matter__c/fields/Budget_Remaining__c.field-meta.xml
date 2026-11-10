@@ -1,0 +1,2 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata"><fullName>Budget_Remaining__c</fullName><label>Budget Remaining</label><formula>Budget_Total__c - (Total_Time_Value__c + Total_Expenses__c)</formula><formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs><precision>18</precision><scale>2</scale><required>false</required><type>Currency</type></CustomField>

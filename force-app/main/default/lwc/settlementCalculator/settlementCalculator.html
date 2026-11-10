@@ -1,0 +1,23 @@
+<template>
+    <lightning-card title="Settlement Calculator" icon-name="standard:calculated_insights">
+        <div class="slds-p-horizontal_medium">
+            <template lwc:if={offerLabel}><p class="slds-text-body_small slds-text-color_weak slds-m-bottom_x-small">Gross amount prefilled from the latest {offerLabel}.</p></template>
+            <div class="slds-grid slds-wrap slds-gutters_x-small">
+                <div class="slds-col slds-size_1-of-2"><lightning-input type="number" formatter="currency" step="0.01" label="Gross settlement" value={gross} data-f="gross" onchange={edit}></lightning-input></div>
+                <div class="slds-col slds-size_1-of-2"><lightning-input type="number" step="0.01" label="Contingency fee %" value={pct} data-f="pct" onchange={edit}></lightning-input></div>
+                <div class="slds-col slds-size_1-of-2"><lightning-input type="number" formatter="currency" step="0.01" label="Case costs to reimburse" value={costs} data-f="costs" onchange={edit}></lightning-input></div>
+                <div class="slds-col slds-size_1-of-2"><lightning-input type="number" formatter="currency" step="0.01" label="Medical liens and other liens" value={liens} data-f="liens" onchange={edit}></lightning-input></div>
+                <div class="slds-col slds-size_1-of-2"><lightning-input type="number" step="0.01" label="Tax withholding %" value={tax} data-f="tax" onchange={edit}></lightning-input></div>
+                <div class="slds-col slds-size_1-of-2"><lightning-combobox label="Fee calculated on" value={basis} options={basisOptions} data-f="basis" onchange={editCombo}></lightning-combobox></div>
+            </div>
+            <dl class="slds-list_horizontal slds-wrap slds-m-top_medium">
+                <dt class="slds-item_label slds-text-color_weak">Attorney fee</dt><dd class="slds-item_detail"><lightning-formatted-number value={fee} format-style="currency"></lightning-formatted-number></dd>
+                <dt class="slds-item_label slds-text-color_weak">Costs reimbursed</dt><dd class="slds-item_detail"><lightning-formatted-number value={costsNum} format-style="currency"></lightning-formatted-number></dd>
+                <dt class="slds-item_label slds-text-color_weak">Liens paid</dt><dd class="slds-item_detail"><lightning-formatted-number value={liensNum} format-style="currency"></lightning-formatted-number></dd>
+                <dt class="slds-item_label slds-text-color_weak">Tax withheld</dt><dd class="slds-item_detail"><lightning-formatted-number value={taxAmount} format-style="currency"></lightning-formatted-number></dd>
+                <dt class="slds-item_label slds-text-title_bold">Net to client</dt><dd class="slds-item_detail slds-text-title_bold"><lightning-formatted-number value={net} format-style="currency"></lightning-formatted-number></dd>
+            </dl>
+            <template lwc:if={negative}><p class="slds-text-color_error slds-m-top_x-small">Deductions exceed the settlement. Check the amounts or negotiate the liens.</p></template>
+        </div>
+    </lightning-card>
+</template>

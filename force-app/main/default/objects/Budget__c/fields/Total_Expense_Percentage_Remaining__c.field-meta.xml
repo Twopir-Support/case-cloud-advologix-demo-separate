@@ -1,0 +1,2 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata"><fullName>Total_Expense_Percentage_Remaining__c</fullName><label>Total Expense % Remaining</label><formula>IF(BLANKVALUE(Expense_Budget__c,0) &gt; 0, 1 - Matter__r.Total_Expenses__c / Expense_Budget__c, 0)</formula><formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs><precision>18</precision><scale>2</scale><required>false</required><type>Percent</type></CustomField>

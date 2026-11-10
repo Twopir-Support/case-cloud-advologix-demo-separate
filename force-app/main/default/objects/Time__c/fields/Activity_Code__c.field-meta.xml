@@ -1,0 +1,2 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata"><fullName>Activity_Code__c</fullName><label>Activity Code</label><deleteConstraint>SetNull</deleteConstraint><referenceTo>UTBMS_Code__c</referenceTo><relationshipLabel>Time Entries (Activity Code)</relationshipLabel><relationshipName>Activity_Time_Entries</relationshipName><required>false</required><type>Lookup</type></CustomField>

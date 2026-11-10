@@ -1,0 +1,2 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata"><fullName>UTBMS_Code__c</fullName><label>UTBMS Code</label><deleteConstraint>SetNull</deleteConstraint><referenceTo>UTBMS_Code__c</referenceTo><relationshipLabel>Budget Details</relationshipLabel><relationshipName>Budget_Details</relationshipName><required>false</required><type>Lookup</type></CustomField>

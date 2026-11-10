@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+  
+  <deploymentStatus>Deployed</deploymentStatus>
+  <description>One existing record that matched a conflict search term.</description>
+  <enableActivities>false</enableActivities>
+  <enableBulkApi>true</enableBulkApi>
+  <enableFeeds>false</enableFeeds>
+  <enableHistory>false</enableHistory>
+  <enableLicensing>false</enableLicensing>
+  <enableReports>true</enableReports>
+  <enableSearch>true</enableSearch>
+  <enableSharing>true</enableSharing>
+  <enableStreamingApi>true</enableStreamingApi>
+  <externalSharingModel>ControlledByParent</externalSharingModel>
+  <label>Conflict Check Result</label>
+  <nameField><displayFormat>CCR-{000000}</displayFormat><label>Result Number</label><trackHistory>false</trackHistory><type>AutoNumber</type></nameField>
+  <pluralLabel>Conflict Check Results</pluralLabel>
+  <sharingModel>ControlledByParent</sharingModel>
+  <visibility>Public</visibility>
+</CustomObject>

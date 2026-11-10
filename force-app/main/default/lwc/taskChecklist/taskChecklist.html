@@ -1,0 +1,23 @@
+<template>
+    <lightning-card title="Task Checklist" icon-name="standard:task">
+        <div slot="actions">
+            <lightning-input type="toggle" label="Show completed" checked={includeClosed} onchange={toggleClosed} message-toggle-active="" message-toggle-inactive=""></lightning-input>
+        </div>
+        <div class="slds-p-horizontal_medium">
+            <template lwc:if={error}><p class="slds-text-color_error">{error}</p></template>
+            <template lwc:if={empty}><p class="slds-text-color_weak">No open tasks. Use Apply Activity Plan to add the standard steps.</p></template>
+            <template for:each={groups} for:item="g">
+                <div key={g.label} class="slds-m-bottom_small">
+                    <h3 class="slds-text-title_caps slds-m-bottom_xx-small">{g.label} ({g.tasks.length})</h3>
+                    <template for:each={g.tasks} for:item="t">
+                        <div key={t.Id} class="slds-grid slds-grid_vertical-align-center slds-p-vertical_xx-small">
+                            <lightning-input type="checkbox" label={t.Subject} variant="label-hidden" checked={t.IsClosed} disabled={t.IsClosed} data-id={t.Id} onchange={complete}></lightning-input>
+                            <a href={t.url} class="slds-col slds-m-left_x-small">{t.Subject}</a>
+                            <span class="slds-col slds-grow-none slds-text-body_small slds-text-color_weak">{t.owner} · {t.due}</span>
+                        </div>
+                    </template>
+                </div>
+            </template>
+        </div>
+    </lightning-card>
+</template>

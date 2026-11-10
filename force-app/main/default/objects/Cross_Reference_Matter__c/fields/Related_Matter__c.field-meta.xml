@@ -1,0 +1,2 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata"><fullName>Related_Matter__c</fullName><label>Related Matter</label><deleteConstraint>SetNull</deleteConstraint><referenceTo>Matter__c</referenceTo><relationshipLabel>Cross Referenced By</relationshipLabel><relationshipName>Cross_Referenced_By</relationshipName><required>false</required><type>Lookup</type></CustomField>

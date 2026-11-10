@@ -1,0 +1,7 @@
+# Salesforce CLI local state (org aliases, caches). Never commit org credentials.
+.sf/
+.sfdx/
+.localdevserver/
+node_modules/
+*.log
+.DS_Store

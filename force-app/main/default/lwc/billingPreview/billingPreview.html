@@ -1,0 +1,60 @@
+<template>
+    <lightning-card title="Billing Preview" icon-name="standard:partner_fund_claim">
+        <div slot="actions">
+            <lightning-button label="Export CSV" onclick={exportCsv} disabled={noRows} class="slds-m-right_x-small"></lightning-button>
+            <lightning-button variant="brand" label="Apply" onclick={load}></lightning-button>
+        </div>
+        <div class="slds-p-horizontal_medium">
+            <div class="slds-grid slds-wrap slds-gutters_x-small">
+                <div class="slds-col slds-size_1-of-2 slds-medium-size_1-of-6">
+                    <lightning-input type="date" label="Start" value={startDate} onchange={setStart}></lightning-input>
+                </div>
+                <div class="slds-col slds-size_1-of-2 slds-medium-size_1-of-6">
+                    <lightning-input type="date" label="End" value={endDate} onchange={setEnd}></lightning-input>
+                </div>
+                <div class="slds-col slds-size_1-of-1 slds-medium-size_2-of-6">
+                    <lightning-checkbox-group label="Disposition" options={dispositionOptions} value={dispositions} onchange={setDispositions} class="inline"></lightning-checkbox-group>
+                </div>
+                <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-6">
+                    <lightning-checkbox-group label="Status" options={statusOptions} value={statuses} onchange={setStatuses}></lightning-checkbox-group>
+                </div>
+                <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-6">
+                    <lightning-checkbox-group label="Show" options={showOptions} value={show} onchange={setShow}></lightning-checkbox-group>
+                </div>
+            </div>
+            <template lwc:if={error}><div class="slds-text-color_error slds-m-vertical_small">{error}</div></template>
+            <template lwc:if={loading}><lightning-spinner alternative-text="Loading"></lightning-spinner></template>
+            <div class="slds-grid slds-grid_vertical-align-end slds-m-vertical_small slds-gutters_x-small">
+                <div class="slds-col slds-grow-none">
+                    <lightning-combobox label="Set disposition on selected" value={massDisposition} options={dispositionOptions} onchange={setMass}></lightning-combobox>
+                </div>
+                <div class="slds-col slds-grow-none">
+                    <lightning-button label="Update selected" onclick={massUpdate} disabled={noSelection}></lightning-button>
+                </div>
+                <div class="slds-col slds-text-align_right">
+                    <span class="slds-text-title_caps">Total</span>
+                    <span class="slds-text-heading_small slds-m-left_x-small"><lightning-formatted-number value={grandTotal} format-style="currency"></lightning-formatted-number></span>
+                </div>
+            </div>
+            <template lwc:if={noRows}><p class="slds-text-color_weak slds-m-vertical_medium">No time or expenses match these filters.</p></template>
+            <template for:each={groups} for:item="acc">
+                <div key={acc.key} class="slds-m-bottom_medium">
+                    <h3 class="slds-text-heading_small slds-m-bottom_x-small">{acc.name} ·
+                        <lightning-formatted-number value={acc.total} format-style="currency"></lightning-formatted-number></h3>
+                    <template for:each={acc.matters} for:item="m">
+                        <div key={m.matterId} class="slds-box slds-box_x-small slds-m-bottom_small">
+                            <div class="slds-grid slds-wrap slds-m-bottom_x-small">
+                                <a href={m.url} class="slds-col slds-text-title_bold">{m.matterNumber} {m.name}</a>
+                                <span class="slds-col slds-text-align_right">{m.hours} h ·
+                                    time <lightning-formatted-number value={m.timeTotal} format-style="currency"></lightning-formatted-number> ·
+                                    expenses <lightning-formatted-number value={m.expenseTotal} format-style="currency"></lightning-formatted-number></span>
+                            </div>
+                            <lightning-datatable key-field="id" data={m.lines} columns={columns} data-matter={m.matterId}
+                                onrowselection={handleSelection} column-widths-mode="auto"></lightning-datatable>
+                        </div>
+                    </template>
+                </div>
+            </template>
+        </div>
+    </lightning-card>
+</template>
